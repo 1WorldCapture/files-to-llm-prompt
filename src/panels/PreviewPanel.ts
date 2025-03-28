@@ -147,7 +147,7 @@ export class PreviewPanel {
                         vscode.window.showErrorMessage(message.message);
                         break;
                     case 'debug':
-                        console.log(message.message); // For debugging search functionality
+                        console.log(message.message);
                         break;
                     case 'refresh':
                         vscode.commands.executeCommand('files-to-llm-prompt.generatePrompt');
@@ -175,6 +175,13 @@ export class PreviewPanel {
                             vscode.ConfigurationTarget.Global
                         );
                         vscode.commands.executeCommand('files-to-llm-prompt.generatePrompt');
+                        break;
+                    case 'updatePrompt':
+                        const promptTokenCount = await countTokens(message.prompt);
+                        webview.postMessage({
+                            type: 'updatePromptTokens',
+                            tokenCount: promptTokenCount
+                        });
                         break;
                 }
             },
