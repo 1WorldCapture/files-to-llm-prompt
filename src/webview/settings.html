@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { 
+            padding: 10px; 
+            font-family: var(--vscode-font-family);
+            color: var(--vscode-foreground);
+            line-height: 1.5;
+        }
+        .section-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin: 16px 0 8px 0;
+        }
+        .setting-group {
+            background: var(--vscode-editor-background);
+            border-radius: 6px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+        .setting-item { 
+            margin-bottom: 20px;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .setting-item:hover {
+            background-color: var(--vscode-list-hoverBackground);
+        }
+        .checkbox-item {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 12px;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .checkbox-row input[type="checkbox"] {
+            margin: 0;
+        }
+        .checkbox-row label {
+            font-weight: 500;
+        }
+        .description {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-left: 24px;
+        }
+        .examples-list {
+            margin: 8px 0 8px 24px;
+            padding-left: 16px;
+        }
+        .examples-list li {
+            margin: 4px 0;
+        }
+        select, textarea {
+            width: 100%;
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+            padding: 8px;
+            margin-top: 8px;
+            border-radius: 4px;
+            font-family: var(--vscode-editor-font-family);
+        }
+        select:focus, textarea:focus {
+            outline: 1px solid var(--vscode-focusBorder);
+            border-color: var(--vscode-focusBorder);
+        }
+    </style>
+    <script>
+        // 初始化配置数据
+        window.CONFIG_DATA = CONFIG_DATA_PLACEHOLDER;
+    </script>
+</head>
+<body>
+    <div class="section-title">File & Folder Visibility</div>
+    <div class="setting-group">
+        <div class="checkbox-item">
+            <div class="checkbox-row">
+                <input type="checkbox" id="includeHidden">
+                <label>Show Hidden Items</label>
+            </div>
+            <div class="description">
+                Display files and folders that start with a dot (.), such as .git or .env files
+            </div>
+        </div>
+
+        <div class="checkbox-item">
+            <div class="checkbox-row">
+                <input type="checkbox" id="overrideGitignore">
+                <label>Override .gitignore Rules</label>
+            </div>
+            <div class="description">
+                Show all files in the explorer, including those that would normally be hidden by .gitignore rules
+            </div>
+        </div>
+    </div>
+
+    <div class="section-title">File Filtering</div>
+    <div class="setting-group">
+        <div class="checkbox-item">
+            <div class="checkbox-row">
+                <input type="checkbox" id="includeDirectories">
+                <label>Apply Filters to Folders</label>
+            </div>
+            <div class="description">
+                When enabled, ignore patterns will also hide matching folder names from the explorer
+            </div>
+        </div>
+
+        <div class="setting-item">
+            <label>Ignore Patterns</label>
+            <div class="description">
+                Specify patterns to hide files and folders from the explorer. Files matching these patterns cannot be selected.
+                <ul class="examples-list">
+                    <li><code>*.log</code> - Hides all log files</li>
+                    <li><code>node_modules</code> - Hides node_modules folders</li>
+                    <li><code>build/*</code> - Hides contents of build folders</li>
+                    <li><code>temp*</code> - Hides anything starting with temp</li>
+                </ul>
+            </div>
+            <textarea id="ignorePatterns" rows="4" 
+                placeholder="Enter each pattern on a new line"></textarea>
+        </div>
+    </div>
+
+    <div class="section-title">Output Settings</div>
+    <div class="setting-group">
+        <div class="setting-item">
+            <label>Output Format</label>
+            <select id="outputFormat">
+                <option value="default">
+                    Simple Text (filename + content)
+                </option>
+                <option value="claude-xml">
+                    Claude XML Format
+                </option>
+            </select>
+            <div class="description">
+                Choose how the selected files will be formatted in the generated prompt
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const vscode = acquireVsCodeApi();
+        console.log('Settings script loaded');
+        
+        // 初始化设置值
+        function initializeSettings() {
+            console.log('Initializing settings with data:', window.CONFIG_DATA);
+            
+            // 设置复选框状态
+            document.getElementById('includeHidden').checked = window.CONFIG_DATA.includeHidden;
+            document.getElementById('overrideGitignore').checked = window.CONFIG_DATA.overrideGitignore;
+            document.getElementById('includeDirectories').checked = window.CONFIG_DATA.includeDirectories;
+            
+            // 设置忽略模式文本
+            document.getElementById('ignorePatterns').value = window.CONFIG_DATA.ignorePatterns;
+            
+            // 设置输出格式下拉框
+            const outputFormatSelect = document.getElementById('outputFormat');
+            for (let i = 0; i < outputFormatSelect.options.length; i++) {
+                if (outputFormatSelect.options[i].value === window.CONFIG_DATA.outputFormat) {
+                    outputFormatSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+        
+        // 执行初始化
+        initializeSettings();
+        
+        // Handle checkbox and select changes
+        document.querySelectorAll('input[type="checkbox"], select').forEach(element => {
+            element.addEventListener('change', (e) => {
+                console.log('Setting changed:', e.target.id, e.target.type === 'checkbox' ? e.target.checked : e.target.value);
+                vscode.postMessage({
+                    type: 'updateSetting',
+                    setting: e.target.id,
+                    value: e.target.type === 'checkbox' ? e.target.checked : e.target.value
+                });
+            });
+        });
+
+        // Handle ignore patterns changes
+        document.getElementById('ignorePatterns').addEventListener('change', (e) => {
+            console.log('Patterns changed:', e.target.value);
+            vscode.postMessage({
+                type: 'updateSetting',
+                setting: 'ignorePatterns',
+                value: e.target.value.split('\n').filter(pattern => pattern.trim())
+            });
+        });
+    </script>
+</body>
+</html> 

@@ -102,12 +102,12 @@ export class PreviewPanel {
     private _getWebviewContent(files: string[]) {
         try {
             // 尝试从生产环境路径加载
-            let htmlUri = vscode.Uri.joinPath(this._extensionUri, 'dist', 'webview', 'index.html');
+            let htmlUri = vscode.Uri.joinPath(this._extensionUri, 'dist', 'webview', 'preview.html');
             let htmlPath = htmlUri.fsPath;
             
             // 如果生产环境路径不存在，尝试开发环境路径
             if (!fs.existsSync(htmlPath)) {
-                htmlUri = vscode.Uri.joinPath(this._extensionUri, 'src', 'webview', 'index.html');
+                htmlUri = vscode.Uri.joinPath(this._extensionUri, 'src', 'webview', 'preview.html');
                 htmlPath = htmlUri.fsPath;
             }
             

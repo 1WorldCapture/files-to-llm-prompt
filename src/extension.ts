@@ -62,7 +62,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     // Register Settings Provider
-    const settingsProvider = new SettingsProvider();
+    const settingsProvider = new SettingsProvider(context.extensionUri);
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
             'files-to-llm-prompt-settings',
