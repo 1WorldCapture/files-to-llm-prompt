@@ -94,6 +94,18 @@
         .add-file-btn:hover {
             background: var(--vscode-button-hoverBackground);
         }
+        .file-selected-mark {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--vscode-textLink-foreground);
+            background: var(--vscode-checkbox-selectBackground);
+            border-radius: 3px;
+            width: 24px;
+            height: 24px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
         .selected-files-section {
             display: flex;
             flex-direction: column;
@@ -534,24 +546,27 @@
                     document.getElementById('includeTreeStructure').checked = message.enabled;
                     break;
                 case 'searchResults':
-                    const filteredFiles = message.files.filter(file => 
-                        !selectedFiles.includes(file)
-                    );
-                    debugLog('Received ' + filteredFiles.length + ' search results');
+                    // 不再过滤掉已选文件，而是标记它们
+                    const allSearchResults = message.files;
+                    debugLog('Received ' + allSearchResults.length + ' search results');
 
-                    if (filteredFiles.length > 0) {
+                    if (allSearchResults.length > 0) {
                         const searchTerm = document.getElementById('fileSearch').value;
-                        searchResults.innerHTML = filteredFiles
+                        searchResults.innerHTML = allSearchResults
                             .map(file => {
                                 const fileName = formatFilePath(file);
                                 const highlightedName = highlightMatches(fileName, searchTerm);
+                                const isSelected = selectedFiles.includes(file);
                                 
                                 return `
                                     <div class="search-item">
                                         <span class="search-item-name" title="${file}">
                                             ${highlightedName}
                                         </span>
-                                        <button class="add-file-btn" data-file="${file}">Add</button>
+                                        ${isSelected ? 
+                                            `<span class="file-selected-mark">✓</span>` : 
+                                            `<button class="add-file-btn" data-file="${file}">Add</button>`
+                                        }
                                     </div>
                                 `;
                             }).join('');
